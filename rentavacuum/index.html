@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Rent a Vacuum · PURE</title>
+  <meta name="description" content="Book the industrial vacuum cleaner for your PURE apartment. €20 per day." />
+  <meta name="theme-color" content="#16150f" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%2316150f'/%3E%3Crect x='18' y='22' width='28' height='28' rx='6' fill='%23ffd23f'/%3E%3Crect x='14' y='16' width='36' height='9' rx='4' fill='%23fff'/%3E%3C/svg%3E" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="wrap">
+    <header class="top">
+      <a class="brand" href="./">
+        <span class="brand-mark">
+          <svg viewBox="0 0 24 24" fill="none"><rect x="6" y="8" width="12" height="12" rx="3" fill="#ffd23f"/><rect x="4" y="4" width="16" height="5" rx="2" fill="#fff"/></svg>
+        </span>
+        Rent a Vacuum
+      </a>
+      <span class="pill"><span class="dot"></span> PURE residents</span>
+    </header>
+
+    <section class="hero">
+      <div>
+        <h1>The <em>big</em> vacuum.<br />Your apartment.</h1>
+        <p class="lead">An industrial wet &amp; dry vacuum for drilling dust, plaster, renovation mess, or just a really deep clean. Pick a day, pay, and it's yours from 18:00 until 18:00 the next day.</p>
+        <div class="facts">
+          <div class="fact"><b id="f-price">€20</b><span>per day</span></div>
+          <div class="fact"><b id="f-dates">23–29 Nov</b><span>available</span></div>
+          <div class="fact"><b id="f-hours">18:00</b><span>pick-up &amp; return</span></div>
+        </div>
+      </div>
+      <div class="hero-art" aria-hidden="true">
+        <svg viewBox="0 0 240 240" fill="none" stroke-linecap="round" stroke-linejoin="round">
+          <!-- hose -->
+          <path d="M150 78 C 200 60, 222 110, 196 150 S 186 214, 214 222" stroke="#fff" stroke-width="10" opacity=".9"/>
+          <path d="M150 78 C 200 60, 222 110, 196 150 S 186 214, 214 222" stroke="#16150f" stroke-width="10" stroke-dasharray="2 9" opacity=".55"/>
+          <!-- drum -->
+          <path d="M48 96 h104 l-8 104 a10 10 0 0 1 -10 9 H66 a10 10 0 0 1 -10 -9 Z" fill="#ffd23f"/>
+          <path d="M60 128 h80" stroke="#16150f" stroke-width="4" opacity=".25"/>
+          <path d="M62 160 h76" stroke="#16150f" stroke-width="4" opacity=".25"/>
+          <!-- lid / motor -->
+          <rect x="40" y="70" width="120" height="30" rx="12" fill="#fff"/>
+          <rect x="72" y="52" width="56" height="22" rx="9" fill="#fff"/>
+          <rect x="88" y="44" width="24" height="12" rx="5" fill="#ffd23f"/>
+          <circle cx="146" cy="85" r="7" fill="#16150f"/>
+          <!-- clips -->
+          <rect x="42" y="98" width="12" height="18" rx="4" fill="#16150f"/>
+          <rect x="146" y="98" width="12" height="18" rx="4" fill="#16150f"/>
+          <!-- wheels -->
+          <circle cx="70" cy="214" r="10" fill="#fff"/>
+          <circle cx="130" cy="214" r="10" fill="#fff"/>
+          <circle cx="70" cy="214" r="4" fill="#16150f"/>
+          <circle cx="130" cy="214" r="4" fill="#16150f"/>
+          <!-- sparkles -->
+          <path d="M28 40 l0 16 M20 48 l16 0" stroke="#ffd23f" stroke-width="4"/>
+          <path d="M200 30 l0 10 M195 35 l10 0" stroke="#fff" stroke-width="3"/>
+        </svg>
+        <span class="hero-tag">Wet &amp; dry · industrial</span>
+      </div>
+    </section>
+
+    <section class="steps">
+      <div class="step"><i>1</i><div><h3>Pick your days</h3><p>Tap one or more free days below. Pick-up 18:00, return 18:00 next day.</p></div></div>
+      <div class="step"><i>2</i><div><h3>Send the money</h3><p>Pay via Tikkie or bank transfer. No card details here.</p></div></div>
+      <div class="step"><i>3</i><div><h3>Get confirmed</h3><p>Once paid, your day is confirmed. Grab the vacuum at 18:00.</p></div></div>
+    </section>
+
+    <section id="mine" class="card mine-box" hidden></section>
+
+    <section class="card book" id="book">
+      <div class="book-head">
+        <h2>Pick a day</h2>
+        <div class="legend">
+          <span><i class="sw free"></i>Free</span>
+          <span><i class="sw sel"></i>Selected</span>
+          <span><i class="sw pend"></i>Reserved</span>
+          <span><i class="sw conf"></i>Booked</span>
+        </div>
+      </div>
+      <div class="slots days-list" id="slots">
+        <div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div>
+      </div>
+      <div class="cart" id="cart">
+        <div class="sum"><span id="cart-count">0 days</span><b id="cart-total">€0</b></div>
+        <div style="display:flex;gap:8px">
+          <button class="btn sm" style="background:rgba(255,255,255,.1);color:#fff" id="cart-clear">Clear</button>
+          <button class="btn primary" id="cart-go">Book now →</button>
+        </div>
+      </div>
+      <div class="note">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex:none;margin-top:1px"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+        <span>Pick up at 18:00 on your day, bring it back by 18:00 the next day so the next neighbour can use it. Unpaid bookings may be released if the payment doesn't come in. Please empty the drum and return it clean. 🙏</span>
+      </div>
+    </section>
+  </div>
+
+  <footer>Made for the PURE building · <a href="admin.html" rel="nofollow">owner</a></footer>
+
+  <!-- booking modal -->
+  <div class="modal" id="modal" role="dialog" aria-modal="true" aria-labelledby="m-title">
+    <div class="sheet" id="sheet"></div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
