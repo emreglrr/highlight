@@ -15,7 +15,7 @@ create table rentavacuum.settings (
   tz text not null default 'Europe/Amsterdam'
 );
 -- one rental per day: pick up 18:00, return 18:00 next day (first_hour=18, slot_hours=24, last_hour=18+24)
-insert into rentavacuum.settings values (1, '2026-11-23', '2026-11-29', 18, 42, 24, 20, 'Europe/Amsterdam');
+insert into rentavacuum.settings values (1, '2026-11-23', '2026-12-16', 18, 42, 24, 20, 'Europe/Amsterdam');
 
 create table rentavacuum.bookings (
   id uuid primary key default gen_random_uuid(),
@@ -75,6 +75,7 @@ declare
   gid uuid := gen_random_uuid();
   recent int;
   h int;
+  days text;
 begin
   select * into s from rentavacuum.settings where id = 1;
   if p_slots is null or array_length(p_slots, 1) is null then raise exception 'Pick at least one day'; end if;
@@ -102,6 +103,13 @@ begin
       raise exception 'Sorry, one of those days was just taken. Refresh and pick another.';
     end;
   end loop;
+
+  select string_agg(to_char(x at time zone s.tz, 'Dy DD Mon'), ', ' order by x) into days from unnest(p_slots) x;
+  perform rentavacuum.notify(
+    'New booking · €' || (array_length(p_slots,1) * s.price_per_slot)::text,
+    trim(p_name) || ' (apt ' || trim(p_apartment) || ') reserved ' || days || '. Confirm once paid.',
+    'broom');
+
   return json_build_object('group_id', gid, 'slots', array_length(p_slots,1), 'total', array_length(p_slots,1) * s.price_per_slot);
 end $$;
 
@@ -183,3 +191,26 @@ grant execute on function public.vac_config(), public.vac_slots(), public.vac_bo
   public.vac_book(timestamptz[],text,text,text,text),
   public.vac_admin_login(text,text), public.vac_admin_logout(text), public.vac_admin_bookings(text),
   public.vac_admin_set_status(text,uuid,text), public.vac_admin_block(text,timestamptz,boolean) to anon, authenticated;
+
+-- ---------- phone alerts (ntfy.sh) ----------
+-- The secret topic lives only in the DB:
+--   insert into rentavacuum.notify_config(topic) values ('rentavacuum-' || encode(extensions.gen_random_bytes(9), 'hex'));
+create table if not exists rentavacuum.notify_config (id int primary key default 1 check (id = 1), topic text not null, email text);
+alter table rentavacuum.notify_config enable row level security;
+revoke all on rentavacuum.notify_config from public, anon, authenticated;
+
+create or replace function rentavacuum.notify(p_title text, p_message text, p_tags text)
+returns void language plpgsql security definer set search_path = '' as $$
+declare c rentavacuum.notify_config; b jsonb;
+begin
+  select * into c from rentavacuum.notify_config where id = 1;
+  if c.topic is null then return; end if;
+  b := jsonb_build_object('topic', c.topic, 'title', p_title, 'message', p_message, 'tags', jsonb_build_array(p_tags),
+                          'click', 'https://rentavacuum.vercel.app/admin', 'priority', 4);
+  -- note: ntfy.sh rejects 'email' for anonymous publishers, so leave notify_config.email null
+  if c.email is not null then b := b || jsonb_build_object('email', c.email); end if;
+  perform net.http_post(url := 'https://ntfy.sh', body := b, headers := '{"Content-Type": "application/json"}'::jsonb);
+exception when others then
+  null; -- an alert problem must never block a booking
+end $$;
+revoke all on function rentavacuum.notify(text, text, text) from public, anon, authenticated;
