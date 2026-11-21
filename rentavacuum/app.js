@@ -25,7 +25,7 @@
       days = buildDays(cfg);
       $("#f-price").textContent = euro(cfg.price_per_slot);
       $("#f-dates").textContent =
-        fmtDay(cfg.start_date, { day: "numeric" }) + "–" + fmtDay(cfg.end_date, { day: "numeric", month: "short" });
+        fmtDay(cfg.start_date, { day: "numeric", month: "short" }) + " – " + fmtDay(cfg.end_date, { day: "numeric", month: "short" });
       $("#f-hours").textContent = pad(cfg.first_hour);
       await refresh();
       renderMine();
@@ -54,7 +54,9 @@
   function render() {
     const now = new Date();
     const mine = mineSet();
-    $("#slots").innerHTML = days
+    // pad so the grid lines up Mon..Sun on desktop
+    const lead = (new Date(cfg.start_date + "T00:00:00Z").getUTCDay() + 6) % 7;
+    $("#slots").innerHTML = '<div class="pad"></div>'.repeat(lead) + days
       .flatMap((d) => buildSlots(cfg, d))
       .map((s) => {
         const iso = s.start.toISOString();

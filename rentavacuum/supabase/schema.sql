@@ -15,7 +15,7 @@ create table rentavacuum.settings (
   tz text not null default 'Europe/Amsterdam'
 );
 -- one rental per day: pick up 18:00, return 18:00 next day (first_hour=18, slot_hours=24, last_hour=18+24)
-insert into rentavacuum.settings values (1, '2026-11-23', '2026-11-29', 18, 42, 24, 20, 'Europe/Amsterdam');
+insert into rentavacuum.settings values (1, '2026-11-23', '2026-12-16', 18, 42, 24, 20, 'Europe/Amsterdam');
 
 create table rentavacuum.bookings (
   id uuid primary key default gen_random_uuid(),

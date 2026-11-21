@@ -130,7 +130,7 @@
 
         <section class="card panel" style="margin-bottom:40px">
           <div class="panel-head">
-            <h2>Week overview</h2>
+            <h2>Calendar</h2>
             <span style="font-size:13px;color:var(--ink-3)">Tap a free day to block it (e.g. when you need the vacuum yourself)</span>
           </div>
           <div class="scrollx">${grid()}</div>
@@ -173,18 +173,17 @@
     const map = new Map();
     for (const r of rows) if (r.status !== "cancelled") map.set(new Date(r.slot_start).toISOString(), r);
     const now = new Date();
-    let h = `<div class="grid"><div></div>${days.map((d) => `<div class="h">${fmtDay(d, { weekday: "short" })}<small>${fmtDay(d, { day: "numeric", month: "short" })}</small></div>`).join("")}`;
-    const hours = buildSlots(cfg, days[0]).map((s) => s.hour);
-    for (const hr of hours) {
-      h += `<div class="tm">${pad(hr)}</div>`;
-      for (const d of days) {
-        const iso = zonedTime(d, hr, cfg.tz).toISOString();
-        const r = map.get(iso);
-        const past = new Date(iso) <= now ? " past" : "";
-        if (!r) h += `<button class="cell${past}" data-iso="${iso}" data-st="free"><span style="color:var(--ink-3)">free</span></button>`;
-        else if (r.status === "blocked") h += `<button class="cell blocked${past}" data-iso="${iso}" data-st="blocked"><b>Blocked</b>tap to free</button>`;
-        else h += `<button class="cell ${r.status}${past}" data-iso="${iso}" data-st="${r.status}" title="${esc(r.name)} · ${esc(r.apartment)}"><b>${esc(r.name)}</b>${esc(r.apartment)}</button>`;
-      }
+    const lead = (new Date(cfg.start_date + "T00:00:00Z").getUTCDay() + 6) % 7;
+    let h = `<div class="grid">` + ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((d) => `<div class="h">${d}</div>`).join("");
+    h += `<div></div>`.repeat(lead);
+    for (const d of days) {
+      const iso = zonedTime(d, cfg.first_hour, cfg.tz).toISOString();
+      const r = map.get(iso);
+      const past = new Date(iso) <= now ? " past" : "";
+      const dl = `<span class="dn">${fmtDay(d, { day: "numeric", month: "short" })}</span>`;
+      if (!r) h += `<button class="cell${past}" data-iso="${iso}" data-st="free">${dl}<span style="color:var(--ink-3)">free</span></button>`;
+      else if (r.status === "blocked") h += `<button class="cell blocked${past}" data-iso="${iso}" data-st="blocked">${dl}<b>Blocked</b>tap to free</button>`;
+      else h += `<button class="cell ${r.status}${past}" data-iso="${iso}" data-st="${r.status}" title="${esc(r.name)} · ${esc(r.apartment)}">${dl}<b>${esc(r.name)}</b>${esc(r.apartment)}</button>`;
     }
     return h + `</div>`;
   }
