@@ -195,22 +195,21 @@ grant execute on function public.vac_config(), public.vac_slots(), public.vac_bo
 -- ---------- phone alerts (ntfy.sh) ----------
 -- The secret topic lives only in the DB:
 --   insert into rentavacuum.notify_config(topic) values ('rentavacuum-' || encode(extensions.gen_random_bytes(9), 'hex'));
-create table if not exists rentavacuum.notify_config (id int primary key default 1 check (id = 1), topic text not null);
+create table if not exists rentavacuum.notify_config (id int primary key default 1 check (id = 1), topic text not null, email text);
 alter table rentavacuum.notify_config enable row level security;
 revoke all on rentavacuum.notify_config from public, anon, authenticated;
 
 create or replace function rentavacuum.notify(p_title text, p_message text, p_tags text)
 returns void language plpgsql security definer set search_path = '' as $$
-declare t text;
+declare c rentavacuum.notify_config; b jsonb;
 begin
-  select topic into t from rentavacuum.notify_config where id = 1;
-  if t is null then return; end if;
-  perform net.http_post(
-    url := 'https://ntfy.sh',
-    body := jsonb_build_object('topic', t, 'title', p_title, 'message', p_message, 'tags', jsonb_build_array(p_tags),
-                               'click', 'https://rentavacuum.vercel.app/admin', 'priority', 4),
-    headers := '{"Content-Type": "application/json"}'::jsonb
-  );
+  select * into c from rentavacuum.notify_config where id = 1;
+  if c.topic is null then return; end if;
+  b := jsonb_build_object('topic', c.topic, 'title', p_title, 'message', p_message, 'tags', jsonb_build_array(p_tags),
+                          'click', 'https://rentavacuum.vercel.app/admin', 'priority', 4);
+  -- note: ntfy.sh rejects 'email' for anonymous publishers, so leave notify_config.email null
+  if c.email is not null then b := b || jsonb_build_object('email', c.email); end if;
+  perform net.http_post(url := 'https://ntfy.sh', body := b, headers := '{"Content-Type": "application/json"}'::jsonb);
 exception when others then
   null; -- an alert problem must never block a booking
 end $$;
