@@ -106,6 +106,14 @@ a { color: inherit; }
 .day .bubble { display: inline-block; min-width: 18px; padding: 0 5px; border-radius: 9px; background: var(--accent); color: var(--accent-ink); font-size: 11px; font-weight: 700; margin-left: 3px; }
 
 .slots { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+.slot.dayslot { min-height: 150px; padding: 16px; display: flex; flex-direction: column; }
+.dayslot .dw { font-size: 12.5px; text-transform: uppercase; letter-spacing: .08em; font-weight: 700; color: var(--ink-3); }
+.dayslot .t { font-size: 30px; margin-top: 2px; }
+.dayslot .range { font-size: 13px; color: var(--ink-2); margin-top: 4px; }
+.dayslot .s { margin-top: auto; padding-top: 10px; font-weight: 600; }
+.slot.sel .dw, .slot.sel .range { color: var(--accent-ink); }
+.slot.confirmed .dw, .slot.confirmed .range { color: rgba(255,255,255,.65); }
+.slot.pending .range { color: var(--pending-ink); }
 .slot {
   position: relative; text-align: left; border: 1.5px solid var(--line); background: var(--free); border-radius: 16px;
   padding: 14px 14px 12px; min-height: 92px; transition: transform .12s, border-color .12s, box-shadow .12s;
@@ -223,6 +231,8 @@ footer a { color: var(--ink-3); }
   .day .left { font-size: 10px; }
   .day .bubble { display: none; }
   .slots { grid-template-columns: 1fr 1fr; gap: 8px; }
+  .slot.dayslot { min-height: 128px; padding: 14px; }
+  .dayslot .t { font-size: 24px; }
   .slot { min-height: 82px; padding: 12px; }
   .row2 { grid-template-columns: 1fr; gap: 0; }
   .facts .fact { flex: 1; min-width: 0; padding: 10px 12px; }

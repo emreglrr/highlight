@@ -14,7 +14,8 @@ create table rentavacuum.settings (
   price_per_slot numeric not null,
   tz text not null default 'Europe/Amsterdam'
 );
-insert into rentavacuum.settings values (1, '2026-11-23', '2026-11-29', 8, 22, 2, 10, 'Europe/Amsterdam');
+-- one rental per day: pick up 18:00, return 18:00 next day (first_hour=18, slot_hours=24, last_hour=18+24)
+insert into rentavacuum.settings values (1, '2026-11-23', '2026-11-29', 18, 42, 24, 20, 'Europe/Amsterdam');
 
 create table rentavacuum.bookings (
   id uuid primary key default gen_random_uuid(),
@@ -76,8 +77,8 @@ declare
   h int;
 begin
   select * into s from rentavacuum.settings where id = 1;
-  if p_slots is null or array_length(p_slots, 1) is null then raise exception 'Pick at least one slot'; end if;
-  if array_length(p_slots, 1) > 4 then raise exception 'Max 4 slots per booking'; end if;
+  if p_slots is null or array_length(p_slots, 1) is null then raise exception 'Pick at least one day'; end if;
+  if array_length(p_slots, 1) > 4 then raise exception 'Max 4 days per booking'; end if;
   if length(trim(coalesce(p_name,''))) = 0 or length(trim(coalesce(p_apartment,''))) = 0 or length(trim(coalesce(p_phone,''))) < 4 then
     raise exception 'Name, apartment and phone are required';
   end if;
@@ -87,7 +88,7 @@ begin
   foreach t in array p_slots loop
     loc := t at time zone s.tz;
     h := extract(hour from loc)::int;
-    if t <= now() then raise exception 'That slot is in the past'; end if;
+    if t <= now() then raise exception 'That day has already started'; end if;
     if loc::date < s.start_date or loc::date > s.end_date then raise exception 'Slot outside rental period'; end if;
     if extract(minute from loc) <> 0 or extract(second from loc) <> 0
        or h < s.first_hour or h + s.slot_hours > s.last_hour
@@ -98,7 +99,7 @@ begin
       insert into rentavacuum.bookings(group_id, slot_start, name, apartment, phone, note)
       values (gid, t, trim(p_name), trim(p_apartment), trim(p_phone), nullif(trim(coalesce(p_note,'')), ''));
     exception when unique_violation then
-      raise exception 'Sorry, one of those slots was just taken. Refresh and pick another.';
+      raise exception 'Sorry, one of those days was just taken. Refresh and pick another.';
     end;
   end loop;
   return json_build_object('group_id', gid, 'slots', array_length(p_slots,1), 'total', array_length(p_slots,1) * s.price_per_slot);
@@ -156,7 +157,7 @@ begin
   if p_status <> 'cancelled' and exists (
     select 1 from rentavacuum.bookings x join rentavacuum.bookings y on x.slot_start = y.slot_start
     where x.group_id = p_group and y.group_id <> p_group and y.status <> 'cancelled') then
-    raise exception 'A slot in this booking is already taken by someone else';
+    raise exception 'A day in this booking is already taken by someone else';
   end if;
   update rentavacuum.bookings set status = p_status, updated_at = now() where group_id = p_group and status <> 'blocked';
 end $$;

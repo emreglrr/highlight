@@ -7,7 +7,6 @@
   let days = [];
   let taken = new Map(); // iso -> status
   let selected = new Map(); // iso -> slot
-  let activeDay = null;
 
   const loadMine = () => { try { return JSON.parse(localStorage.getItem(LS) || "[]"); } catch { return []; } };
   const saveMine = (v) => { try { localStorage.setItem(LS, JSON.stringify(v)); } catch {} };
@@ -27,9 +26,7 @@
       $("#f-price").textContent = euro(cfg.price_per_slot);
       $("#f-dates").textContent =
         fmtDay(cfg.start_date, { day: "numeric" }) + "–" + fmtDay(cfg.end_date, { day: "numeric", month: "short" });
-      $("#f-hours").textContent = pad(cfg.first_hour).slice(0, 2) + "–" + pad(cfg.last_hour).slice(0, 2);
-      const today = new Date().toISOString().slice(0, 10);
-      activeDay = days.find((d) => d >= today && buildSlots(cfg, d).some((s) => s.start > new Date())) || days[0];
+      $("#f-hours").textContent = pad(cfg.first_hour);
       await refresh();
       renderMine();
       setInterval(refresh, 30000);
@@ -52,36 +49,29 @@
     return s;
   }
 
+  const fmtAt = (d, o) => new Intl.DateTimeFormat("en-GB", { timeZone: cfg.tz, ...o }).format(d);
+
   function render() {
     const now = new Date();
     const mine = mineSet();
-    $("#days").innerHTML = days
-      .map((d) => {
-        const slots = buildSlots(cfg, d);
-        const free = slots.filter((s) => s.start > now && !taken.has(s.start.toISOString())).length;
-        const sel = slots.filter((s) => selected.has(s.start.toISOString())).length;
-        return `<button class="day ${d === activeDay ? "on" : ""} ${free === 0 ? "full" : ""}" data-day="${d}">
-          <div class="dow">${fmtDay(d, { weekday: "short" })}${sel ? `<span class="bubble">${sel}</span>` : ""}</div>
-          <div class="num">${fmtDay(d, { day: "numeric" })}</div>
-          <div class="left">${free === 0 ? "Full" : free + " free"}</div>
-        </button>`;
-      })
-      .join("");
-
-    $("#slots").innerHTML = buildSlots(cfg, activeDay)
+    $("#slots").innerHTML = days
+      .flatMap((d) => buildSlots(cfg, d))
       .map((s) => {
         const iso = s.start.toISOString();
         const st = taken.get(iso);
         const past = s.start <= now;
         const isSel = selected.has(iso);
+        const back = new Date(s.start.getTime() + cfg.slot_hours * 3600e3);
         let cls = "", label = euro(cfg.price_per_slot), dis = false;
         if (past) { cls = "past"; label = "Passed"; dis = true; }
         else if (st === "confirmed") { cls = "confirmed"; label = "Booked"; dis = true; }
         else if (st === "pending") { cls = "pending"; label = "Awaiting payment"; dis = true; }
         else if (isSel) { cls = "sel"; label = "Selected"; }
         if (mine.has(iso)) { cls += " mine"; if (st) label = st === "confirmed" ? "Yours ✓" : "Yours · unpaid"; }
-        return `<button class="slot ${cls}" data-iso="${iso}" ${dis ? "disabled" : ""}>
-          <div class="t">${pad(s.hour)} <small>– ${pad(s.end)}</small></div>
+        return `<button class="slot dayslot ${cls}" data-iso="${iso}" ${dis ? "disabled" : ""}>
+          <div class="dw">${fmtDay(s.day, { weekday: "long" })}</div>
+          <div class="t">${fmtDay(s.day, { day: "numeric", month: "short" })}</div>
+          <div class="range">${fmtAt(s.start, { hour: "2-digit", minute: "2-digit" })} → ${fmtAt(back, { weekday: "short", hour: "2-digit", minute: "2-digit" })}</div>
           <div class="s"><span>${label}</span></div>
         </button>`;
       })
@@ -89,16 +79,9 @@
 
     const n = selected.size;
     $("#cart").classList.toggle("show", n > 0);
-    $("#cart-count").textContent = `${n} slot${n === 1 ? "" : "s"} · ${n * cfg.slot_hours}h`;
+    $("#cart-count").textContent = `${n} day${n === 1 ? "" : "s"}`;
     $("#cart-total").textContent = euro(n * cfg.price_per_slot);
   }
-
-  $("#days").addEventListener("click", (e) => {
-    const b = e.target.closest(".day");
-    if (!b) return;
-    activeDay = b.dataset.day;
-    render();
-  });
 
   $("#slots").addEventListener("click", (e) => {
     const b = e.target.closest(".slot");
@@ -106,7 +89,7 @@
     const iso = b.dataset.iso;
     if (selected.has(iso)) selected.delete(iso);
     else {
-      if (selected.size >= MAX) return toast(`Max ${MAX} slots per booking — leave some for the neighbours 😉`, true);
+      if (selected.size >= MAX) return toast(`Max ${MAX} days per booking — leave some for the neighbours 😉`, true);
       selected.set(iso, true);
     }
     render();
@@ -125,7 +108,7 @@
     const d = new Date(iso);
     const f = (o) => new Intl.DateTimeFormat("en-GB", { timeZone: cfg.tz, ...o }).format(d);
     const end = new Date(d.getTime() + cfg.slot_hours * 3600e3);
-    return `${f({ weekday: "short", day: "numeric", month: "short" })} · ${f({ hour: "2-digit", minute: "2-digit" })}–${new Intl.DateTimeFormat("en-GB", { timeZone: cfg.tz, hour: "2-digit", minute: "2-digit" }).format(end)}`;
+    return `${f({ weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })} → ${new Intl.DateTimeFormat("en-GB", { timeZone: cfg.tz, weekday: "short", hour: "2-digit", minute: "2-digit" }).format(end)}`;
   }
 
   function openForm() {
@@ -143,10 +126,10 @@
           <div class="field"><label for="phone">Phone / WhatsApp</label><input type="tel" id="phone" name="phone" required minlength="4" maxlength="30" value="${esc(last.phone)}" autocomplete="tel" /></div>
         </div>
         <div class="field"><label for="note">Note <span style="font-weight:400;color:var(--ink-3)">(optional)</span></label><textarea id="note" maxlength="300" placeholder="What are you cleaning? Pick-up wishes?"></textarea></div>
-        <div class="total"><span>${isos.length} × ${cfg.slot_hours}h at ${euro(cfg.price_per_slot)}</span><b>${euro(isos.length * cfg.price_per_slot)}</b></div>
+        <div class="total"><span>${isos.length} day${isos.length > 1 ? "s" : ""} × ${euro(cfg.price_per_slot)}</span><b>${euro(isos.length * cfg.price_per_slot)}</b></div>
         <div class="actions">
           <button type="button" class="btn ghost" id="fcancel">Back</button>
-          <button type="submit" class="btn dark" id="fsubmit">Reserve slots</button>
+          <button type="submit" class="btn dark" id="fsubmit">Reserve</button>
         </div>
       </form>`;
     modal.classList.add("show");
@@ -171,7 +154,7 @@
         const el = $("#ferr");
         el.textContent = err.message;
         el.classList.add("show");
-        btn.disabled = false; btn.textContent = "Reserve slots";
+        btn.disabled = false; btn.textContent = "Reserve";
         refresh();
       }
     };
@@ -182,7 +165,7 @@
       <div class="success">
         <div class="big"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#2b2300" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg></div>
         <h2 id="m-title">Reserved!</h2>
-        <p class="sub">Your ${isos.length > 1 ? "slots are" : "slot is"} held for you.</p>
+        <p class="sub">Your ${isos.length > 1 ? "days are" : "day is"} held for you. Pick up at ${pad(cfg.first_hour)}.</p>
       </div>
       <div class="pay">
         <div style="font-size:13px;color:var(--ink-3);text-transform:uppercase;letter-spacing:.06em;font-weight:600">Amount to pay</div>

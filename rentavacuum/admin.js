@@ -81,7 +81,7 @@
   const fmt = (iso, o) => new Intl.DateTimeFormat("en-GB", { timeZone: cfg.tz, ...o }).format(new Date(iso));
   const slotLabel = (iso) => {
     const end = new Date(new Date(iso).getTime() + cfg.slot_hours * 3600e3).toISOString();
-    return `${fmt(iso, { weekday: "short", day: "numeric", month: "short" })} · ${fmt(iso, { hour: "2-digit", minute: "2-digit" })}–${fmt(end, { hour: "2-digit", minute: "2-digit" })}`;
+    return `${fmt(iso, { weekday: "short", day: "numeric", month: "short" })} ${fmt(iso, { hour: "2-digit", minute: "2-digit" })} → ${fmt(end, { weekday: "short", hour: "2-digit", minute: "2-digit" })}`;
   };
   const waLink = (p) => {
     let d = p.replace(/[^\d+]/g, "");
@@ -112,7 +112,7 @@
           <div class="card stat hl"><span>To confirm</span><b>${pend.length}</b></div>
           <div class="card stat"><span>Paid</span><b>${euro(money(conf))}</b></div>
           <div class="card stat"><span>Outstanding</span><b>${euro(money(pend))}</b></div>
-          <div class="card stat"><span>Slots booked</span><b>${used}<small style="font-size:16px;color:var(--ink-3)">/${totalSlots}</small></b></div>
+          <div class="card stat"><span>Days booked</span><b>${used}<small style="font-size:16px;color:var(--ink-3)">/${totalSlots}</small></b></div>
         </div>
 
         <section class="card panel">
@@ -131,7 +131,7 @@
         <section class="card panel" style="margin-bottom:40px">
           <div class="panel-head">
             <h2>Week overview</h2>
-            <span style="font-size:13px;color:var(--ink-3)">Tap a free slot to block it (e.g. when you need the vacuum yourself)</span>
+            <span style="font-size:13px;color:var(--ink-3)">Tap a free day to block it (e.g. when you need the vacuum yourself)</span>
           </div>
           <div class="scrollx">${grid()}</div>
         </section>
@@ -193,7 +193,7 @@
     b.disabled = true;
     try {
       await call("vac_admin_set_status", { p_group: g, p_status: status });
-      toast({ confirmed: "Confirmed ✓", cancelled: "Cancelled — slots are free again", pending: "Moved back to awaiting payment" }[status]);
+      toast({ confirmed: "Confirmed ✓", cancelled: "Cancelled — days are free again", pending: "Moved back to awaiting payment" }[status]);
       await load();
     } catch (e) { toast(e.message, true); b.disabled = false; }
   }

@@ -2,7 +2,7 @@
 
 Tiny booking site for renting the industrial vacuum to PURE residents.
 
-- `index.html` – residents pick 2-hour slots and reserve them (pay outside the app via Tikkie / bank).
+- `index.html` – residents pick days (pick up 18:00, return 18:00 next day) and reserve them (pay outside the app via Tikkie / bank).
 - `admin.html` – owner login; confirm bookings once paid, cancel, block slots.
 - Backend: Supabase (`supabase/schema.sql`). The browser only calls `vac_*` database functions;
   the tables themselves are not reachable with the public key. Admin password is bcrypt-hashed in the DB,
