@@ -4,7 +4,7 @@ window.RAV = {
   SUPABASE_URL: "https://cvqlrxsuyalcawsagukj.supabase.co",
   SUPABASE_KEY: "sb_publishable_2copM9J6eK4u5IUYF7c7gA_5sby3bmi",
   // Shown to renters after booking. Edit freely (e.g. "Tikkie link in the PURE group chat").
-  PAYMENT_NOTE: "Send the money via Tikkie or bank transfer. As soon as it's in, your slot turns green.",
+  PAYMENT_NOTE: "Send the money via Tikkie or bank transfer. As soon as it's in, your day is confirmed.",
 };
 
 window.rpc = async function rpc(fn, args = {}) {
