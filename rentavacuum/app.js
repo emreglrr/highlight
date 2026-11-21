@@ -65,9 +65,9 @@
         let cls = "", label = euro(cfg.price_per_slot), dis = false;
         if (past) { cls = "past"; label = "Passed"; dis = true; }
         else if (st === "confirmed") { cls = "confirmed"; label = "Booked"; dis = true; }
-        else if (st === "pending") { cls = "pending"; label = "Awaiting payment"; dis = true; }
+        else if (st === "pending") { cls = "pending"; label = "Reserved"; dis = true; }
         else if (isSel) { cls = "sel"; label = "Selected"; }
-        if (mine.has(iso)) { cls += " mine"; if (st) label = st === "confirmed" ? "Yours ✓" : "Yours · unpaid"; }
+        if (mine.has(iso)) { cls += " mine"; if (st) label = st === "confirmed" ? "Yours ✓" : "Yours · reserved"; }
         return `<button class="slot dayslot ${cls}" data-iso="${iso}" ${dis ? "disabled" : ""}>
           <div class="dw">${fmtDay(s.day, { weekday: "long" })}</div>
           <div class="t">${fmtDay(s.day, { day: "numeric", month: "short" })}</div>
@@ -195,7 +195,7 @@
     box.hidden = false;
     box.innerHTML = `<h3>Your bookings</h3>` + keep.map((b) => {
       const s = b.statuses.length ? b.statuses[0].status : "cancelled";
-      const lab = { pending: "⏳ Awaiting payment", confirmed: "✓ Confirmed", cancelled: "Cancelled" }[s] || s;
+      const lab = { pending: "Reserved", confirmed: "✓ Confirmed", cancelled: "Cancelled" }[s] || s;
       return `<div class="mine-row">
         <div><div style="font-weight:600">${b.slots.map(slotLabel).join("<br>")}</div>
         <div style="font-size:13px;color:var(--ink-3)">${euro(b.total)}</div></div>
